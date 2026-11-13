@@ -3,3 +3,5 @@
 make $* TESTNAME=case0
 make sim $* TESTNAME=case1
 make sim $* TESTNAME=case2
+make sim $* TESTNAME=case3
+make sim $* TESTNAME=case4

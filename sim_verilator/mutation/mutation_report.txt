@@ -1,0 +1,193 @@
+Mutation test report   (seed 1, 2026-11-11 22:03)
+tests: case0 case1 case2 case3 case4
+
+m01_fmt_data_bit0          KILLED       formatter output data: bit 0 inverted
+    case0: FAIL: CMPERR x140 
+    case1: FAIL: CMPERR x300 
+    case2: FAIL: CMPERR x5613 
+    case3: FAIL: CMPERR x196 
+    case4: FAIL: CMPERR x14 
+m02_fifo_rare_corrupt      KILLED       channel FIFO corrupts one specific data word
+    case0: FAIL: CMPERR x1 
+    case1: FAIL: CMPERR x1 
+    case2: FAIL: CMPERR x3 
+    case3: pass (196 compared)
+    case4: pass (14 compared)
+m03_arb_prio_inverted      KILLED       arbiter: channel 0 vs channel 1 priority comparison inverted
+    case0: FAIL: CHKERR x39 
+    case1: pass (300 compared)
+    case2: FAIL: CHKERR x423 
+    case3: FAIL: CHKERR x20 order_check x4 
+    case4: FAIL: CHKERR x3 order_check x2 
+m04_reg_write_mask         KILLED       control register 0: bit 3 (packet length) is lost on write
+    case0: pass (140 compared)
+    case1: FAIL: reg_compare x1 
+    case2: FAIL: RegModel x1 
+    case3: pass (196 compared)
+    case4: FAIL: CMPERR x9 order_check x3 reg_check x41 
+m05_reg_read_mux           KILLED       reading control register 1 returns control register 0
+    case0: FAIL: CMPERR x40 
+    case1: FAIL: CMPERR x100 reg_compare x1 
+    case2: pass (5613 compared)
+    case3: pass (196 compared)
+    case4: FAIL: CMPERR x4 end_check x1 reg_check x75 
+m06_reg_store_prio_flip    KILLED       control register 2: a priority bit is flipped when stored
+    case0: pass (140 compared)
+    case1: FAIL: reg_compare x1 
+    case2: FAIL: RegModel x1 
+    case3: FAIL: order_check x3 
+    case4: FAIL: order_check x1 reg_check x75 
+m07_ready_ignores_enable   KILLED       channel ready ignores the channel enable bit
+    case0: pass (140 compared)
+    case1: pass (300 compared)
+    case2: pass (5613 compared)
+    case3: FAIL: CHKERR x96 CMPERR x14 chnl_check x3 order_check x6 
+    case4: pass (14 compared)
+m08_fmt_len8_as16          KILLED       formatter decodes length code 1 as 16 words instead of 8
+    case0: FAIL: CMPERR x20 
+    case1: FAIL: CMPERR x50 
+    case2: FAIL: CMPERR x474 
+    case3: FAIL: CMPERR x28 end_check x1 order_check x13 
+    case4: FAIL: CMPERR x3 end_check x1 order_check x3 
+m09_fifo_never_full        KILLED       channel FIFO never reports full (overflow)
+    case0: FAIL: CMPERR x77 
+    case1: FAIL: CMPERR x190 
+    case2: FAIL: CMPERR x3071 
+    case3: FAIL: end_check x2 order_check x1 
+    case4: pass (14 compared)
+m10_fmt_chid_stuck         KILLED       formatter channel id output stuck at 0
+    case0: pass (80 compared)
+    case1: pass (100 compared)
+    case2: FAIL: CMPERR x423 
+    case3: FAIL: CMPERR x112 end_check x2 order_check x17 
+    case4: FAIL: CMPERR x7 end_check x2 order_check x3 
+m11_reg_reset_value        KILLED       control register 1 resets to 0x05 instead of 0x07
+    case0: pass (140 compared)
+    case1: pass (300 compared)
+    case2: pass (5613 compared)
+    case3: pass (196 compared)
+    case4: FAIL: reg_check x1 
+m12_stat_reg_margin        KILLED       status register 0 shows the FIFO margin of channel 1
+    case0: pass (140 compared)
+    case1: pass (300 compared)
+    case2: pass (5613 compared)
+    case3: pass (196 compared)
+    case4: FAIL: reg_check x10 
+m13_reg_rsvd_writable      KILLED       control register 1: the reserved bits [31:6] can be written
+    case0: pass (140 compared)
+    case1: pass (300 compared)
+    case2: pass (5613 compared)
+    case3: pass (196 compared)
+    case4: FAIL: reg_check x4 
+m14_reg_addr_alias         KILLED       register write: address bits [7:5] are ignored (0x20 is written like 0x00)
+    case0: pass (140 compared)
+    case1: pass (300 compared)
+    case2: pass (5613 compared)
+    case3: pass (196 compared)
+    case4: FAIL: reg_check x15 
+m15_stat_read_mux          KILLED       reading status register 2 returns status register 1
+    case0: pass (140 compared)
+    case1: pass (300 compared)
+    case2: pass (5613 compared)
+    case3: pass (196 compared)
+    case4: FAIL: reg_check x10 
+m16_chnl_en_wrong_reg      KILLED       enable of channel 1 is taken from control register 0
+    case0: pass (140 compared)
+    case1: pass (300 compared)
+    case2: pass (5613 compared)
+    case3: FAIL: TIMEOUT x1 
+    case4: FAIL: TIMEOUT x1 
+m17_arb_ch0_ch2_stuck      KILLED       arbiter: when only channel 0 and 2 have data, channel 0 always wins
+    case0: pass (140 compared)
+    case1: pass (300 compared)
+    case2: pass (5613 compared)
+    case3: FAIL: CHKERR x32 order_check x3 
+    case4: FAIL: CHKERR x3 order_check x1 
+m18_prio_wrong_reg         KILLED       priority of channel 1 is taken from control register 0
+    case0: pass (140 compared)
+    case1: pass (300 compared)
+    case2: pass (5613 compared)
+    case3: FAIL: order_check x6 
+    case4: FAIL: order_check x2 
+m19_stat_reg_writable      KILLED       status register 0 can be written (one clock later it shows the FIFO margin again)
+    case0: pass (140 compared)
+    case1: pass (300 compared)
+    case2: pass (5613 compared)
+    case3: pass (196 compared)
+    case4: FAIL: reg_check x2 
+m20_reg_write_alias_up     KILLED       a write to control register 0 also changes control register 1
+    case0: pass (140 compared)
+    case1: pass (300 compared)
+    case2: pass (5613 compared)
+    case3: FAIL: CMPERR x20 TIMEOUT x1 order_check x7 
+    case4: FAIL: TIMEOUT x1 reg_check x34 
+m21_stat_reg_low_bits      KILLED       status register 0: the two lowest bits always read 0
+    case0: pass (140 compared)
+    case1: pass (300 compared)
+    case2: pass (5613 compared)
+    case3: pass (196 compared)
+    case4: FAIL: reg_check x2 
+m22_reg_wr_ignores_psel    KILLED       register write ignores psel: a write meant for another bus slave changes the register addressed last
+    case0: pass (140 compared)
+    case1: pass (300 compared)
+    case2: pass (5613 compared)
+    case3: pass (196 compared)
+    case4: FAIL: reg_check x3 
+m23_stat_frozen_disabled   KILLED       status register 0 is only updated while channel 0 is enabled
+    case0: pass (140 compared)
+    case1: pass (300 compared)
+    case2: pass (5613 compared)
+    case3: pass (196 compared)
+    case4: FAIL: reg_check x2 
+m24_pkglen_code_4_7        SURVIVED     packet length code of channel 1 loses its MSB: codes 4..7 give 4..32 words instead of 32 (known survivor)
+    case0: pass (140 compared)
+    case1: pass (300 compared)
+    case2: pass (5613 compared)
+    case3: pass (196 compared)
+    case4: pass (14 compared)
+m25_stat_frozen_busy_bus   KILLED       the status registers are only updated while psel is low (frozen during back-to-back transfers)
+    case0: pass (140 compared)
+    case1: pass (300 compared)
+    case2: pass (5613 compared)
+    case3: pass (196 compared)
+    case4: FAIL: reg_check x3 
+m26_bus_fsm_reset_setup    KILLED       bus state machine leaves reset in SETUP: if pwrite is high at the first clock, pwdata is written to control register 0
+    case0: pass (140 compared)
+    case1: pass (300 compared)
+    case2: pass (5613 compared)
+    case3: pass (196 compared)
+    case4: FAIL: reg_check x1 
+m27_arb_tie_ch0_ch2        KILLED       arbiter: only channel 0 and 2 have data and their priorities are equal: channel 2 wins
+    case0: pass (140 compared)
+    case1: pass (300 compared)
+    case2: pass (5613 compared)
+    case3: FAIL: CHKERR x2 order_check x1 
+    case4: pass (14 compared)
+m28_fmt_no_grant_wait      KILLED       formatter sends a packet without waiting for fmt_grant
+    case0: pass (140 compared)
+    case1: pass (300 compared)
+    case2: pass (5613 compared)
+    case3: FAIL: fmt_check x5 
+    case4: pass (14 compared)
+m29_fmt_end_on_first       KILLED       formatter: fmt_end is high on the first word of a packet instead of the last
+    case0: pass (140 compared)
+    case1: pass (300 compared)
+    case2: pass (5613 compared)
+    case3: FAIL: fmt_check x392 
+    case4: FAIL: fmt_check x28 
+m30_arb_tie_3way           KILLED       arbiter: all three channels have data, channel 1 and 2 share the best priority: channel 2 wins
+    case0: pass (140 compared)
+    case1: pass (300 compared)
+    case2: pass (5613 compared)
+    case3: FAIL: CHKERR x2 order_check x1 
+    case4: pass (14 compared)
+m31_arb_keeps_owner        KILLED       arbiter: at the end of a packet it keeps the current channel while it has data, even if a better channel waits
+    case0: pass (140 compared)
+    case1: pass (300 compared)
+    case2: pass (5613 compared)
+    case3: pass (196 compared)
+    case4: FAIL: CHKERR x1 order_check x1 
+
+killed: 30   survived: 1   not applied: 0   build failed: 0   (mutation score: 30 / 31)
+detected by:   case0 6   case1 7   case2 8   case3 15   case4 24
+detected by case0 case1 case2 alone: 9 / 31

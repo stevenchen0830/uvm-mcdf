@@ -1,0 +1,41 @@
+# One mutant per line:   name | DUT file | sed expression | what the injected bug does
+# The sed expression must change the file, otherwise the mutant is reported as NOT_APPLIED.
+# The character | separates the fields, so it cannot appear inside the sed expression:
+# write \x7c instead (GNU sed), e.g.  s/a \x7c\x7c b/a \&\& b/  turns "a || b" into "a && b".
+m01_fmt_data_bit0        | formater.v   | s/assign fmt_data_o = fmt_data_r;/assign fmt_data_o = fmt_data_r ^ 32'h1;/ | formatter output data: bit 0 inverted
+m02_fifo_rare_corrupt    | slave_fifo.v | s/mem\[wr_pointer_r\[4:0\]\] <= chx_data_i;/mem[wr_pointer_r[4:0]] <= (chx_data_i[7:0]==8'h13 \&\& chx_data_i[15:8]==8'h05) ? (chx_data_i ^ 32'h0001_0000) : chx_data_i;/ | channel FIFO corrupts one specific data word
+m03_arb_prio_inverted    | arbiter.v    | s/if(slv1_prio_i >= slv0_prio_i) begin/if(slv1_prio_i < slv0_prio_i) begin/ | arbiter: channel 0 vs channel 1 priority comparison inverted
+m04_reg_write_mask       | reg.v        | s/`SLV0_RW_ADDR: mem\[`SLV0_RW_REG\]<= {26'b0,pwdata_i\[`PAC_LEN_HIGH:0\]};/`SLV0_RW_ADDR: mem[`SLV0_RW_REG]<= {26'b0,pwdata_i[`PAC_LEN_HIGH:0]} \& 32'h37;/ | control register 0: bit 3 (packet length) is lost on write
+m05_reg_read_mux         | reg.v        | s/`SLV1_RW_ADDR:  cmd_data_reg  <= mem\[`SLV1_RW_REG\];/`SLV1_RW_ADDR:  cmd_data_reg  <= mem[`SLV0_RW_REG];/ | reading control register 1 returns control register 0
+m06_reg_store_prio_flip  | reg.v        | s/`SLV2_RW_ADDR: mem\[`SLV2_RW_REG\]<= {26'b0,pwdata_i\[`PAC_LEN_HIGH:0\]};/`SLV2_RW_ADDR: mem[`SLV2_RW_REG]<= {26'b0,pwdata_i[`PAC_LEN_HIGH:0]} ^ 32'h2;/ | control register 2: a priority bit is flipped when stored
+m07_ready_ignores_enable | slave_fifo.v | s/if (!full_s \&\& slvx_en_i) /if (!full_s) / | channel ready ignores the channel enable bit
+m08_fmt_len8_as16        | formater.v   | s/3'd1 : length_r = 6'd8;/3'd1 : length_r = 6'd16;/ | formatter decodes length code 1 as 16 words instead of 8
+m09_fifo_never_full      | slave_fifo.v | s/assign full_s = ({~wr_pointer_r\[5\],wr_pointer_r\[4:0\]}==rd_pointer_r);/assign full_s = 1'b0;/ | channel FIFO never reports full (overflow)
+m10_fmt_chid_stuck       | formater.v   | s/assign fmt_chid_o = a2f_id_i;/assign fmt_chid_o = 2'b00;/ | formatter channel id output stuck at 0
+m11_reg_reset_value      | reg.v        | s/mem \[`SLV1_RW_REG\] = 32'h00000007;/mem [`SLV1_RW_REG] = 32'h00000005;/ | control register 1 resets to 0x05 instead of 0x07
+m12_stat_reg_margin      | reg.v        | s/mem \[`SLV0_R_REG\] <= {24'b0,slv0_margin_i};/mem [`SLV0_R_REG] <= {24'b0,slv1_margin_i};/ | status register 0 shows the FIFO margin of channel 1
+# m13 - m17 were added together with case3 and case4: bugs in what these two tests check
+m13_reg_rsvd_writable    | reg.v        | s/`SLV1_RW_ADDR: mem\[`SLV1_RW_REG\]<= {26'b0,pwdata_i\[`PAC_LEN_HIGH:0\]};/`SLV1_RW_ADDR: mem[`SLV1_RW_REG]<= pwdata_i;/ | control register 1: the reserved bits [31:6] can be written
+m14_reg_addr_alias       | reg.v        | s/case(addr_r)/case(addr_r \& 8'h1f)/ | register write: address bits [7:5] are ignored (0x20 is written like 0x00)
+m15_stat_read_mux        | reg.v        | s/`SLV2_R_ADDR:   cmd_data_reg  <= mem\[`SLV2_R_REG\];/`SLV2_R_ADDR:   cmd_data_reg  <= mem[`SLV1_R_REG];/ | reading status register 2 returns status register 1
+m16_chnl_en_wrong_reg    | reg.v        | s/assign  slv1_en_o = mem\[`SLV1_RW_REG\]\[0\];/assign  slv1_en_o = mem[`SLV0_RW_REG][0];/ | enable of channel 1 is taken from control register 0
+m17_arb_ch0_ch2_stuck    | arbiter.v    | s/if(slv2_prio_i >= slv0_prio_i) begin/if(1'b1) begin/ | arbiter: when only channel 0 and 2 have data, channel 0 always wins
+# m18 - m21 come from an independent review of the first version of case3 / case4: they all
+# passed that version, the current one has to find them
+m18_prio_wrong_reg       | reg.v        | s/assign  slv1_prio_o  = mem\[`SLV1_RW_REG\]/assign  slv1_prio_o  = mem[`SLV0_RW_REG]/ | priority of channel 1 is taken from control register 0
+m19_stat_reg_writable    | reg.v        | s/mem \[`SLV0_R_REG\] <= {24'b0,slv0_margin_i};/mem [`SLV0_R_REG] <= ((current_state == state_ENABLE) \& pwr_i \& (addr_r == `SLV0_R_ADDR)) ? pwdata_i : {24'b0,slv0_margin_i};/ | status register 0 can be written (one clock later it shows the FIFO margin again)
+m20_reg_write_alias_up   | reg.v        | s/`SLV0_RW_ADDR: mem\[`SLV0_RW_REG\]<= {26'b0,pwdata_i\[`PAC_LEN_HIGH:0\]};/`SLV0_RW_ADDR: begin mem[`SLV0_RW_REG]<= {26'b0,pwdata_i[`PAC_LEN_HIGH:0]}; mem[`SLV1_RW_REG]<= {26'b0,pwdata_i[`PAC_LEN_HIGH:0]}; end/ | a write to control register 0 also changes control register 1
+m21_stat_reg_low_bits    | reg.v        | s/mem \[`SLV0_R_REG\] <= {24'b0,slv0_margin_i};/mem [`SLV0_R_REG] <= {24'b0,slv0_margin_i[7:2],2'b00};/ | status register 0: the two lowest bits always read 0
+# m22 - m31 come from a second independent review (of the revised case3 / case4). m24 is a
+# known survivor: no test can send data with a packet length code of 4..7, because the
+# reference model computes 4 << code (64..512 words) instead of 32 for these codes.
+m22_reg_wr_ignores_psel  | reg.v        | s/else if ((current_state == state_ENABLE) & pwr_i) begin/else if (pen_i \& pwr_i) begin/ | register write ignores psel: a write meant for another bus slave changes the register addressed last
+m23_stat_frozen_disabled | reg.v        | s/mem \[`SLV0_R_REG\] <= {24'b0,slv0_margin_i};/if (slv0_en_o) mem [`SLV0_R_REG] <= {24'b0,slv0_margin_i};/ | status register 0 is only updated while channel 0 is enabled
+m24_pkglen_code_4_7      | reg.v        | s/assign  slv1_pkglen_o  = mem\[`SLV1_RW_REG\]\[`PAC_LEN_HIGH:`PAC_LEN_LOW\];/assign  slv1_pkglen_o  = mem[`SLV1_RW_REG][`PAC_LEN_HIGH-1:`PAC_LEN_LOW];/ | packet length code of channel 1 loses its MSB: codes 4..7 give 4..32 words instead of 32 (known survivor)
+m25_stat_frozen_busy_bus | reg.v        | s/^        else begin$/        else if (!psel_i) begin/ | the status registers are only updated while psel is low (frozen during back-to-back transfers)
+m26_bus_fsm_reset_setup  | reg.v        | s/last_state <= state_IDLE   ;/last_state <= state_SETUP  ;/ | bus state machine leaves reset in SETUP: if pwrite is high at the first clock, pwdata is written to control register 0
+m27_arb_tie_ch0_ch2      | arbiter.v    | s/if(slv2_prio_i >= slv0_prio_i) begin/if(slv2_prio_i > slv0_prio_i) begin/ | arbiter: only channel 0 and 2 have data and their priorities are equal: channel 2 wins
+m28_fmt_no_grant_wait    | formater.v   | s/if(fmt_grant_i) n_state = FMT_START;/if(1'b1) n_state = FMT_START;/ | formatter sends a packet without waiting for fmt_grant
+m29_fmt_end_on_first     | formater.v   | s/assign fmt_end_o = fmt_end_r;/assign fmt_end_o = fmt_start_r;/ | formatter: fmt_end is high on the first word of a packet instead of the last
+m30_arb_tie_3way         | arbiter.v    | s/&& slv2_prio_i < slv1_prio_i)/\&\& slv2_prio_i <= slv1_prio_i)/ | arbiter: all three channels have data, channel 1 and 2 share the best priority: channel 2 wins
+m31_arb_keeps_owner      | arbiter.v    | s/else if (f2a_id_req_i)/else if (f2a_id_req_i \&\& !(id_sel_r == 2'b00 \&\& slv0_req_i) \&\& !(id_sel_r == 2'b01 \&\& slv1_req_i) \&\& !(id_sel_r == 2'b10 \&\& slv2_req_i))/ | arbiter: at the end of a packet it keeps the current channel while it has data, even if a better channel waits

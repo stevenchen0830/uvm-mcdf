@@ -259,7 +259,18 @@ class coverage_mcdf extends uvm_component;
       super.report_phase(phase);
       s = "\n---------------------------------------------------------------\n";
       s = {s, "COVERAGE SUMMARY \n"}; 
+`ifdef VERILATOR
+      // $get_coverage() is not implemented by Verilator. The overall figure is the mean of
+      // all covergroup types, and these six are the only covergroups in the testbench.
+      s = {s, $sformatf("total coverage: %.1f \n", (this.cg_mcdf_reg_write_read.get_coverage()
+                                                    + this.cg_mcdf_reg_illegal_access.get_coverage()
+                                                    + this.cg_channel_disable.get_coverage()
+                                                    + this.cg_arbiter_priority.get_coverage()
+                                                    + this.cg_formatter_length.get_coverage()
+                                                    + this.cg_formatter_grant.get_coverage()) / 6.0)};
+`else
       s = {s, $sformatf("total coverage: %.1f \n", $get_coverage())}; 
+`endif
       s = {s, $sformatf("  cg_mcdf_reg_write_read coverage: %.1f \n", this.cg_mcdf_reg_write_read.get_coverage())}; 
       s = {s, $sformatf("  cg_mcdf_reg_illegal_access coverage: %.1f \n", this.cg_mcdf_reg_illegal_access.get_coverage())}; 
       s = {s, $sformatf("  cg_channel_disable_test coverage: %.1f \n", this.cg_channel_disable.get_coverage())}; 

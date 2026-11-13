@@ -7,6 +7,8 @@ import uvm_pkg::*;
 `include "case0.sv"
 `include "case1.sv"
 `include "case2.sv"
+`include "case3.sv"
+`include "case4.sv"
 
 module tb_top;
 
@@ -116,12 +118,25 @@ module tb_top;
 
     initial begin 
         string testname;
+`ifdef VERILATOR
+        // Open-source flow (sim_verilator/): there is no FSDB/Verdi, so dump an FST
+        // waveform instead (open it with GTKWave or Surfer). Only when +DUMP is given.
+        if($test$plusargs("DUMP")) begin
+            if($value$plusargs("TESTNAME=%s", testname)) begin
+                $dumpfile({testname, "_sim_dir/", testname, ".fst"});
+            end else begin
+                $dumpfile("tb.fst");
+            end
+            $dumpvars(0, tb_top);
+        end
+`else
         if($value$plusargs("TESTNAME=%s", testname)) begin
             $fsdbDumpfile({testname, "_sim_dir/", testname, ".fsdb"});
         end else begin
             $fsdbDumpfile("tb.fsdb");
         end
         $fsdbDumpvars(0, tb_top);
+`endif
     end
 
 endmodule

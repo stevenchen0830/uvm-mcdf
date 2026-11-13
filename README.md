@@ -3,6 +3,16 @@
 #### 介绍
 取自路科验证V2Pro-UVM入门进阶实验lab5源码
 
+#### 不用 VCS 也能跑（开源 Verilator 流程）
+没有 VCS / Verdi 时，可以用 `sim_verilator/` 里的免费流程在 WSL 或 Linux 上运行全部五个用例（原工程的 case0 ~ case2，以及后补的 case3、case4）：
+
+    cd sim_verilator
+    ./setup_toolchain.sh     # 只需一次：装 Verilator、GCC、z3 到 ~/eda，不需要 sudo
+    ./run.sh regress         # 编译并运行 case0 ~ case4
+
+- 使用说明：[sim_verilator/README.md](sim_verilator/README.md)
+- 工程讲解、覆盖率与变异测试结果、发现的问题：[doc/verification_notes_zh.md](doc/verification_notes_zh.md)
+
 #### 软件架构
     uvm-mcdf/
     ├── doc

@@ -1,0 +1,75 @@
+// Configuration file (Verilator .vlt format) for the uvm-mcdf testbench.
+// It is passed on the verilator command line, so that nothing has to be changed in dut/.
+`verilator_config
+
+//------------------------------------------------------------------------------
+// 1. UVM register backdoor access
+//------------------------------------------------------------------------------
+// case2 calls  mirror(status, UVM_CHECK, UVM_BACKDOOR).  The UVM DPI code then looks up
+// "tb_top.dut.ctrl_regs_inst.mem[N]" through VPI, so this array has to be visible to VPI
+// (in the VCS flow "-debug_access+all" does that for the whole design).
+public_flat_rw -module "ctrl_regs" -var "mem"
+
+//------------------------------------------------------------------------------
+// 2. Code coverage scope (only matters for the COV=1 build)
+//------------------------------------------------------------------------------
+// Line / branch / toggle / expression / FSM coverage is collected for the DUT only, the
+// equivalent of "+tree tb_top.dut" in ../sim/cov.cfg. The UVM library, the testbench classes
+// and the simulator's own std package are excluded. The covergroups in
+// testbench/component/coverage/coverage_pkg.sv are functional coverage and still count.
+coverage_off -file "*uvm_pkg_all*"
+coverage_off -file "*/testbench/*"
+coverage_off -file "*verilated_std.sv"
+
+//------------------------------------------------------------------------------
+// 3. Lint waivers
+//------------------------------------------------------------------------------
+// Waivers only silence messages; they do not change how anything is simulated.
+//
+// DUT: every waiver is limited to the lines whose warning was reviewed (dut/ is unchanged
+// upstream code, so the line numbers are stable). A new warning anywhere else in the DUT
+// still shows up in the compile log.
+//
+// dut/reg.v (module ctrl_regs)
+//   LATCH           line 73      current_state has no value for last_state == 2'b11 (unreachable)
+//   CASEINCOMPLETE  74,118,130   case statements without default
+//   COMBDLY         76-83        "<=" on current_state inside always @(*); evaluated like "="
+lint_off -rule LATCH          -file "*/dut/reg.v" -lines 73
+lint_off -rule CASEINCOMPLETE -file "*/dut/reg.v" -lines 74
+lint_off -rule COMBDLY        -file "*/dut/reg.v" -lines 76-83
+lint_off -rule CASEINCOMPLETE -file "*/dut/reg.v" -lines 118
+lint_off -rule CASEINCOMPLETE -file "*/dut/reg.v" -lines 130
+// dut/formater.v
+//   WIDTHEXPAND     65-67,128-130  1'b0 assigned to the 6-bit counters
+//                   162,179        length_r - 2'd1 / - 2'd2 (evaluated at 6 bits, as intended)
+//   WIDTHTRUNC      80,92-113,139  the 6-bit counters index the 32-entry fmt_fifo. The index is
+//                                  truncated to 5 bits (32 would alias entry 0); the counters
+//                                  never exceed 31 where they are used
+//   CASEINCOMPLETE  89,118,199     case statements without default
+//   COMBDLY         138-140        "<=" on fmt_data_r inside always @(*); evaluated like "="
+//   LATCH           189            FSM outputs have no value for the unused state codes 3'b100, 3'b101
+lint_off -rule WIDTHEXPAND    -file "*/dut/formater.v" -lines 65-67
+lint_off -rule WIDTHTRUNC     -file "*/dut/formater.v" -lines 80
+lint_off -rule CASEINCOMPLETE -file "*/dut/formater.v" -lines 89
+lint_off -rule WIDTHTRUNC     -file "*/dut/formater.v" -lines 92-113
+lint_off -rule CASEINCOMPLETE -file "*/dut/formater.v" -lines 118
+lint_off -rule WIDTHEXPAND    -file "*/dut/formater.v" -lines 128-130
+lint_off -rule COMBDLY        -file "*/dut/formater.v" -lines 138-140
+lint_off -rule WIDTHTRUNC     -file "*/dut/formater.v" -lines 139
+lint_off -rule WIDTHEXPAND    -file "*/dut/formater.v" -lines 162
+lint_off -rule WIDTHEXPAND    -file "*/dut/formater.v" -lines 179
+lint_off -rule LATCH          -file "*/dut/formater.v" -lines 189
+lint_off -rule CASEINCOMPLETE -file "*/dut/formater.v" -lines 199
+//
+// Testbench: these four rules are switched off for everything under testbench/. They hide
+// about 950 messages, nearly all from UVM macro expansions (uvm_field_*, uvm_do_*,
+// "if (!item.randomize() with {...})") plus about 35 hand-written statements that mix int with
+// narrower values (e.g. out_tr.ch_id = id in model.sv). Note: a NEW warning of one of these
+// four rules in testbench code is therefore not shown either; other rules still are.
+//   WIDTHTRUNC / WIDTHEXPAND   operand widths differ
+//   CASTCONST                  uvm_do_on_with tries $cast to both a sequence and an item
+//   IGNOREDRETURN              predict() called as a task in model.sv
+lint_off -rule WIDTHTRUNC     -file "*/testbench/*"
+lint_off -rule WIDTHEXPAND    -file "*/testbench/*"
+lint_off -rule CASTCONST      -file "*/testbench/*"
+lint_off -rule IGNOREDRETURN  -file "*/testbench/*"
